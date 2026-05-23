@@ -1,0 +1,103 @@
+{
+  "dataset": {
+    "name": "WildChat-1M",
+    "source": "https://huggingface.co/datasets/allenai/WildChat-1M",
+    "description": "1M real ChatGPT conversations collected via opt-in browser extension (April 2024 release)",
+    "total_conversations": 469859,
+    "total_user_messages": 977962,
+    "unique_users": 129166,
+    "temporal_range": ["2023-04-09", "2024-04-29"]
+  },
+  "embedding_model": "text-embedding-3-small",
+  "method": {
+    "approach": "Semantic similarity search using combinatorial prototype generation",
+    "prototype_generation": "Behavior templates × harm domain terms, with exclusion rules for nonsensical pairings",
+    "scoring": "Max cosine similarity between user message embedding and any prototype in the category",
+    "refinement": "Iterative snowball sampling with LLM grading (8 rounds to convergence)",
+    "grading_model": "gpt-4.1-nano (structured outputs, temperature=0)",
+    "grading_criterion": "Keep if ambiguous enough to warrant human safety review; reject only obvious false positives"
+  },
+  "results": {
+    "initial_scan": {
+      "description": "Prototype-based embedding scan (round 0)",
+      "candidates": 2079,
+      "kept": 1441,
+      "rejected": 638,
+      "false_positive_rate_percent": 30.7
+    },
+    "iterative_expansion": {
+      "description": "8 rounds of snowball sampling + LLM grading to convergence",
+      "total_candidates_graded": 14000,
+      "total_kept": 7757,
+      "total_rejected": 6243,
+      "overall_false_positive_rate_percent": 44.6,
+      "rounds": [
+        {"round": 0, "source": "initial_scan", "candidates": 2079, "kept": 1441, "rejected": 638},
+        {"round": 1, "source": "snowball", "candidates": 6821, "kept": 2992, "rejected": 3829},
+        {"round": 2, "source": "snowball", "candidates": 1408, "kept": 942, "rejected": 466},
+        {"round": 3, "source": "snowball", "candidates": 1577, "kept": 1033, "rejected": 544},
+        {"round": 4, "source": "snowball", "candidates": 765, "kept": 572, "rejected": 193},
+        {"round": 5, "source": "snowball", "candidates": 473, "kept": 296, "rejected": 177},
+        {"round": 6, "source": "snowball", "candidates": 397, "kept": 193, "rejected": 204},
+        {"round": 7, "source": "snowball", "candidates": 480, "kept": 288, "rejected": 192}
+      ]
+    },
+    "final_flagged_conversations": 6213,
+    "flagged_by_openai_moderation_api": 163,
+    "detection_gap_percent": 96.6,
+    "users_with_concerns": 3210,
+    "percent_users_with_concerns": 2.49,
+    "multi_category_users": 248
+  },
+  "categories": {
+    "crisis_despair": {
+      "name": "Crisis & Despair",
+      "flagged_messages": 2485,
+      "users": 1097,
+      "severity": "critical",
+      "threshold": 0.50,
+      "prototype_count": 24
+    },
+    "violence_harmful": {
+      "name": "Violence & Harmful Content",
+      "flagged_messages": 2094,
+      "users": 1117,
+      "severity": "critical",
+      "threshold": 0.52,
+      "prototype_count": 1056
+    },
+    "safety_circumvention": {
+      "name": "Safety Circumvention",
+      "flagged_messages": 3041,
+      "users": 1119,
+      "severity": "high",
+      "threshold": 0.63,
+      "prototype_count": 9
+    },
+    "ai_psychosis": {
+      "name": "AI Psychosis",
+      "flagged_messages": 137,
+      "users": 125,
+      "severity": "critical",
+      "threshold": 0.52,
+      "prototype_count": 28
+    }
+  },
+  "keyword_comparison": {
+    "keywords_tested": ["suicide", "kill", "die", "bomb", "weapon", "self-harm"],
+    "conversations_containing_keywords": 19601,
+    "keyword_conversations_also_flagged": 644,
+    "overlap_keyword_and_embedding": 89,
+    "semantic_only_no_keyword": 1078
+  },
+  "openai_moderation_comparison": {
+    "total_flagged_conversations": 6213,
+    "also_flagged_by_openai_2026_api": 163,
+    "missed_by_openai_conversations": 6050,
+    "missed_by_openai_messages": 7494,
+    "note": "163 and 6,050 are conversation-level counts (sum = 6,213). 7,494 is the message-level miss count from 7,757 kept messages."
+  },
+  "key_finding": "The OpenAI Moderation API missed 96.6% of flagged messages (97.4% at the conversation level), including conversations where the model provided crisis resources while the moderation layer reported negligible self-harm scores.",
+  "note_on_counts": "The 6,213 flagged conversations represent unique conversation-level findings after deduplication. The 7,757 kept items from iterative expansion include multiple flagged messages from the same conversations. Category counts (e.g., 2,485 crisis messages) are message-level. We compute the detection gap (96.6%) at the message level against the 2026 OpenAI Moderation API.",
+  "citation": "Zhao, Y., et al. (2024). WildChat: 1M ChatGPT Interaction Logs in the Wild. ICLR 2024."
+}
